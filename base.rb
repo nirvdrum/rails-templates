@@ -1,5 +1,5 @@
 project_name = @root.split('/').last
-owner = `whoami`
+owner = `whoami`.strip
 
 # Delete unnecessary files
 run "rm README"
@@ -21,6 +21,7 @@ END
 # Copy database.yml for distribution use
 run "cp config/database.yml config/database.yml.example"
 
+# Set up database.yml file for PostgreSQL.
 file 'config/database.yml', <<-END
 #   gem install postgresql-ruby (not necessary on OS X Leopard)
 development:
@@ -64,6 +65,16 @@ gem 'postgresql-ruby'
 gem 'shoulda'
 
 rake 'gems:install', :sudo => true
+
+# Set up Blueprint CSS.
+inside('public/stylesheets') do
+  run 'wget http://github.com/joshuaclayton/blueprint-css/tarball/master -O blueprint.tar.gz'
+  run 'tar -zxf blueprint.tar.gz'
+  run 'mv *blueprint* tmp'
+  run 'mv tmp/blueprint .'
+  run 'rm -rf tmp'
+end
+  
 
 # Now commit everything.
 git :add => '.'
