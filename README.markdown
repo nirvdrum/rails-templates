@@ -5,4 +5,5 @@ A library of Rails application templates I find useful.
 
 Current library
 ---------------
-* basic - Simple Rails template that adds less (CSS processor) as a plugin.
+* base - Simple Rails template that adds less (CSS processor) as a plugin.
+* auth - Does everything base does, plus sets up Authlogic for user authentication.
