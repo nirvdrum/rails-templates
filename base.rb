@@ -70,9 +70,10 @@ rake 'gems:install', :sudo => true
 inside('public/stylesheets') do
   run 'wget http://github.com/joshuaclayton/blueprint-css/tarball/master -O blueprint.tar.gz'
   run 'tar -zxf blueprint.tar.gz'
-  run 'mv *blueprint* tmp'
+  run 'mv *-blueprint-* tmp'
   run 'mv tmp/blueprint .'
   run 'rm -rf tmp'
+  run 'rm blueprint.tar.gz'
 end
   
 
