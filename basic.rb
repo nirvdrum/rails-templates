@@ -25,7 +25,7 @@ plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 # Install all gems
 gem 'less'
 
-rake('gems:install', :sudo => true)
+rake 'gems:install', :sudo => true
 
 # Commit all work so far to the repository
 git :add => '.'
