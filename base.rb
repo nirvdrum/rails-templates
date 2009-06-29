@@ -75,6 +75,44 @@ inside('public/stylesheets') do
   run 'rm -rf tmp'
   run 'rm blueprint.tar.gz'
 end
+
+file 'app/views/layouts/application.erb', <<-END
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>#{project_name}: <%= @page_title %></title>
+  <%= stylesheet_link_tag 'blueprint/screen', :media => 'screen, projection' %>
+  <%= stylesheet_link_tag 'blueprint/print', :media => 'print' %>
+  <%= stylesheet_link_tag 'blueprint/plugins/fancy-type/screen', :media => 'screen, projection' %>
+</head>
+<body>
+
+<div class="container">
+  <div id="header" class="span-24 last">
+    <% if flash[:notice] %>
+      <div id="flash_message" class="success"><%= flash[:notice] %></div>
+    <% end %>
+
+    <% if flash[:error] %>
+      <div id="flash_message" class="error"><%= flash[:error] %></div>
+    <% end %>
+
+    <h1><%= @page_title %></h1>
+    <hr />
+  </div>
+
+  <div class="span-20 last">
+    <%= yield %>
+  </div>
+</div>
+
+</body>
+</html>
+
+END
   
 
 # Now commit everything.
