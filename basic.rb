@@ -24,6 +24,8 @@ plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 
 # Install all gems
 gem 'less'
+gem 'shoulda'
+gem 'mocha'
 
 rake 'gems:install', :sudo => true
 
