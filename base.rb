@@ -56,9 +56,11 @@ production:
   timeout: 5000
 END
 
+# Set up shoulda in test_helper.
 gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\nrequire 'shoulda'"
 
 # Install Rails plugins
+plugin 'hoptoad_notifier', :git => 'git://github.com/thoughtbot/hoptoad_notifier.git'
 plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 
 # Install all gems
@@ -68,6 +70,22 @@ gem 'postgresql-ruby'
 gem 'thoughtbot-shoulda'
 
 rake 'gems:install', :sudo => true
+
+# Set up Hoptoad notifier.
+initializer 'hoptoad.rb', <<-END
+HoptoadNotifier.configure do |config|
+  break if RAILS_ENV == 'test'
+
+  config.api_key = RAILS_ENV == 'production' ? 'PRODUCTION_KEY' : 'STAGING_KEY'
+  # config.secure = true  # Must have a Toad or Bullfrog account for SSL support.
+
+  # Disable certain environment variables from showing up in Hoptoad.
+  config.environment_filters << "AWS_SECRET"
+  config.environment_filters << "EC2_PRIVATE_KEY"
+  config.environment_filters << "AWS_ACCESS"
+  config.environment_filters << "EC2_CERT"
+end
+END
 
 # Set up Blueprint CSS.
 inside('public/stylesheets') do
