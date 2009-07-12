@@ -23,9 +23,10 @@ run "cp config/database.yml config/database.yml.example"
 
 # Set up database.yml file for PostgreSQL.
 file 'config/database.yml', <<-END
-#   gem install postgresql-ruby (not necessary on OS X Leopard)
+<% jdbc = defined?(JRUBY_VERSION) ? 'jdbc' : '' %>
+
 development:
-  adapter: postgresql
+  adapter: <%= jdbc %>postgresql
   database: #{project_name}
   username: #{owner}
   password: #{owner}
@@ -37,7 +38,7 @@ development:
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  adapter: postgresql
+  adapter: <%= jdbc %>postgresql
   database: #{project_name}_test
   username: #{owner}
   password: #{owner} 
@@ -46,7 +47,7 @@ test:
   timeout: 5000
 
 production:
-  adapter: postgresql
+  adapter: <%= jdbc %>postgresql
   database: #{project_name}
   username: #{owner}
   password: #{owner}
