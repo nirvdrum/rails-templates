@@ -56,7 +56,7 @@ production:
   timeout: 5000
 END
 
-gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\n  require 'shoulda'"
+gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\nrequire 'shoulda'"
 
 # Install Rails plugins
 plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
@@ -65,7 +65,7 @@ plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 gem 'less'
 gem 'mocha'
 gem 'postgresql-ruby'
-gem 'shoulda'
+gem 'thoughtbot-shoulda'
 
 rake 'gems:install', :sudo => true
 
