@@ -56,6 +56,8 @@ production:
   timeout: 5000
 END
 
+gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\n  require 'shoulda'"
+
 # Install Rails plugins
 plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 
