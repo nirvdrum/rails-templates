@@ -1,4 +1,4 @@
-load_template "http://github.com/nirvdrum/rails-templates/raw/master/basic.rb"
+load_template 'http://github.com/nirvdrum/rails-templates/raw/master/base.rb'
 
 # Set up authlogic/test_case in test_helper.
 gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\nrequire 'authlogic/test_case'"
