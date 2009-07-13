@@ -7,3 +7,8 @@ gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\nrequire 'authlog
 gem 'authlogic'
 
 rake 'gems:install', :sudo => true
+
+# Install all plugins
+plugin 'authlogic_generator', :git => 'git://github.com/masone/authlogic_generator.git'
+
+generate :authlogic
