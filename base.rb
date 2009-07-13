@@ -65,9 +65,10 @@ plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
 
 # Install all gems
 gem 'less'
-gem 'mocha'
 gem 'postgresql-ruby'
-gem 'thoughtbot-shoulda'
+
+gem 'mocha', :env => 'test'
+gem 'thoughtbot-shoulda', :env => 'test'
 
 rake 'gems:install', :sudo => true
 
