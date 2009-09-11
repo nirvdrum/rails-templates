@@ -61,7 +61,7 @@ gsub_file 'test/test_helper.rb', /(require 'test_help')/, "\\1\nrequire 'shoulda
 
 # Install Rails plugins
 plugin 'hoptoad_notifier', :git => 'git://github.com/thoughtbot/hoptoad_notifier.git'
-plugin 'less-for-rails', :git => 'git://github.com/augustl/less-for-rails.git'
+plugin 'more', :git => 'git://github.com/logandk/more.git'
 
 # Install all gems
 gem 'less'
@@ -136,6 +136,171 @@ file 'app/views/layouts/application.erb', <<-END
 
 END
   
+
+# Set up capistrano.
+run 'capify .'
+
+file 'config/deploy.rb', <<-END
+set :application, '"#{project_name}"'
+
+set :user, '#{owner}'
+
+ssh_options[:forward_agent]  = true
+
+set :repository,  "#{owner}@ssh.negativetwenty.net:/var/git/#{project_name}.git"
+set :scm, "git"
+set :deploy_via, :remote_cache
+set :git_enable_submodules, true
+
+branch = `git branch`.grep(/\*/).first.chomp.gsub(/\* */, '')
+set :branch, branch
+
+# If you aren't deploying to /u/apps/#\{application} on the target
+# servers (which is the default), you can specify the actual location
+# via the :deploy_to variable:
+set :deploy_to, "/var/www/\#{application}/www"
+
+set :runner, user
+
+role :app, application
+role :web, application
+role :db,  application, :primary => true
+
+namespace :deploy do
+  desc "Restart Application"
+  task :restart, :roles => :app do
+    run "touch \#{current_path}/tmp/restart.txt"
+  end
+end
+
+desc "After updating code we need to populate a new database.yml"
+task :after_update_code, :roles => :app do
+  require "yaml"
+  set :production_database_password, proc { Capistrano::CLI.password_prompt("Production database remote Password : ") }
+  buffer = YAML::load_file('config/database.yml')
+  # get ride of uneeded configurations
+  buffer.delete('test')
+  buffer.delete('development')
+  
+  # Populate production element
+  buffer['production']['adapter'] = "postgresql"
+  buffer['production']['database'] = "negativetwenty_www"
+  buffer['production']['username'] = "nirvdrum"
+  buffer['production']['password'] = production_database_password
+  buffer['production']['host'] = "localhost"
+  
+  put YAML::dump(buffer), "\#{release_path}/config/database.yml", :mode => 0664
+end
+
+desc "After a deploy, we need to re-establish the symlink to Redmine."
+task :after_deploy, :roles => :app do
+  redmine_path = "\#{deploy_to}/../redmine/public"  
+  run "ln -s \#{redmine_path} \#{release_path}/public/redmine"
+end
+
+
+# Taken from: http://github.com/jtimberman/ree-capfile/blob/master/Capfile
+
+# Author: Joshua Timberman <joshua@hjksolutions.com>
+#
+# Copyright 2008, HJK Solutions
+# Portions originally written by spiceee, 
+#   http://snippets.dzone.com/posts/show/6372
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Change to latest release or desired prior version for download link below.
+ree_dl_id = "58677"
+ree_version = "1.8.6-20090610"
+ 
+ree_tarball = "ruby-enterprise-\#{ree_version}.tar.gz"
+ree_source = "http://rubyforge.org/frs/download.php/\#{ree_dl_id}/\#{ree_tarball}"
+ree_path = "/opt/ruby-enterprise"
+# Change to the location of the "system" installed Ruby.
+old_gem = "/usr/bin/gem"
+new_gem = "\#{ree_path}-\#{ree_version}/bin/gem"
+ 
+# Uncomment to use the local gems server, also uncomment cmd in ree_gems task.
+#gem_source = "http://gems"
+ 
+desc "Install Ruby Enterprise Edition"
+task :ree_install, :roles => :app do
+  logger.info("Installing Ruby Enterprise Edition from source")
+  run("mkdir -p /tmp/ree")
+  run("sh -c '(cd /tmp/ree; wget \#{ree_source} 2>/dev/null)'")
+  run("sh -c '(cd /tmp/ree; tar zxf \#{ree_tarball})'")
+  sudo("sh -c '(cd /tmp/ree/ruby-enterprise-\#{ree_version}; ./installer -a \#{ree_path}-\#{ree_version})'")
+  sudo("ln -sf \#{ree_path}-\#{ree_version} \#{ree_path}")
+  sudo("rm -rf /tmp/ree")
+end
+ 
+desc "Install System Gems in REE"
+task :ree_gems, :roles => :app do
+  oldgems = capture "\#{old_gem} list"
+  newgems = capture "\#{new_gem} list"
+  # oldgems.each block written by spiceee.
+  # http://snippets.dzone.com/posts/show/6372
+  oldgems.each do |line|
+    matches = line.match(/([A-Z].+) \(([0-9\., ]+)\)/i)
+    if matches 
+    then
+      gem_name = matches[1]
+      versions = matches[2]
+      versions.split(', ').each do |ver|
+        cmd = "\#{new_gem} install \#{gem_name} --version \#{ver}" # --source \#{gem_source}"
+        # rubygems-update is "installed" because REE includes RubyGems 1.3.1.
+        if newgems =~ /\#{gem_name} \(.*\#{ver}.*\)/i || gem_name =~ /rubygems-update/
+        then
+          logger.info("\#{gem_name} \#{ver} is already installed. Skipping.")
+        else
+          sudo(cmd)
+        end
+      end
+    end
+  end # oldgems.each
+end
+ 
+desc "Install REE and system gems"
+task :ree_install_all, :roles => :app do
+  ree_install
+  ree_gems
+end
+
+
+
+desc "Install munin"
+task :install_munin do
+  sudo "apt-get install munin munin-node munin-plugins-extra tofromdos -y"
+end
+
+desc "Install munin plugins"
+task :install_munin_plugins do  
+  plugins = {'passenger_status' => 20319, 'passenger_memory_stats' => 21391}
+  
+  plugins.each do |plugin_name, gist_id|
+    plugin = "/usr/share/munin/plugins/\#{plugin_name}"
+    link = "/etc/munin/plugins/\#{plugin_name}"
+    sudo "wget http://gist.github.com/\#{gist_id}.txt"
+    sudo "mv \#{gist_id}.txt \#{plugin}"
+    sudo "chmod a+x \#{plugin}"
+    sudo "fromdos \#{plugin}"
+    sudo "rm -rf \#{link}"
+    sudo "ln -s \#{plugin} \#{link}"
+    puts " ------- !!!!sudo visudo ---> munin ALL=(ALL) NOPASSWD:/usr/bin/passenger-status, /usr/bin/passenger-memory-stats"
+  end
+end
+END
+
 
 # Now commit everything.
 git :add => '.'
