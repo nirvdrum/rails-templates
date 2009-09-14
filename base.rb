@@ -88,6 +88,13 @@ HoptoadNotifier.configure do |config|
 end
 END
 
+# Set up jQuery.
+inside('public/javascripts') do
+  run 'rm *'
+  run 'wget http://jqueryjs.googlecode.com/files/jquery-1.3.2.min.js'
+  run 'http://github.com/malsup/form/raw/master/jquery.form.js'
+end
+
 # Set up Blueprint CSS.
 inside('public/stylesheets') do
   run 'wget http://github.com/joshuaclayton/blueprint-css/tarball/master -O blueprint.tar.gz'
@@ -109,6 +116,10 @@ file 'app/views/layouts/application.erb', <<-END
   <%= stylesheet_link_tag 'blueprint/screen', :media => 'screen, projection' %>
   <%= stylesheet_link_tag 'blueprint/print', :media => 'print' %>
   <%= stylesheet_link_tag 'blueprint/plugins/fancy-type/screen', :media => 'screen, projection' %>
+
+  <%= javascript_include_tag 'jquery-1.3.2.min' %>
+
+  <%= yield :head %>
 </head>
 <body>
 
